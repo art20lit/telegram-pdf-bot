@@ -2,7 +2,7 @@ name: Telegram Excel Bot
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/30 * * * *'  # Каждые 30 минут
   workflow_dispatch:
   push:
     branches: [ main ]
@@ -25,9 +25,18 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Run bot
+    - name: Kill all bot processes
       run: |
+        # Убиваем все процессы бота
+        pkill -f "python.*bot.py" 2>/dev/null || true
+        # Убиваем процессы на порту (если есть)
+        fuser -k 8080/tcp 2>/dev/null || true
+        sleep 3
+    
+    - name: Run bot once
+      run: |
+        # Запускаем бота и ждем 10 секунд
         python bot.py &
-        while true; do
-          sleep 60
-        done
+        sleep 10
+        # Останавливаем бота после обработки
+        pkill -f "python.*bot.py" 2>/dev/null || true
